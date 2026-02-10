@@ -27,7 +27,7 @@ const NavItem = styled.button`
   flex-direction: column;
   align-items: center;
   gap: 0.25rem;
-  color: ${props => props.active ? '#2196F3' : '#666'};
+  color: ${props => props.$active ? '#2196F3' : '#666'};
   transition: color 0.2s ease;
   
   &:hover {
@@ -66,7 +66,7 @@ const Navigation = () => {
       {navItems.map(item => (
         <NavItem
           key={item.path}
-          active={location.pathname === item.path}
+          $active={location.pathname === item.path}
           onClick={() => navigate(item.path)}
         >
           <span className="icon">{item.icon}</span>

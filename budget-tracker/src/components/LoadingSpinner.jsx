@@ -11,7 +11,7 @@ const SpinnerContainer = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: ${props => props.fullHeight ? '50vh' : '100px'};
+  min-height: ${props => props.$fullHeight ? '50vh' : '100px'};
 `;
 
 const Spinner = styled.div`
@@ -31,7 +31,7 @@ const LoadingText = styled.p`
 
 const LoadingSpinner = ({ size, fullHeight = false, text = "Loading..." }) => {
   return (
-    <SpinnerContainer fullHeight={fullHeight}>
+    <SpinnerContainer $fullHeight={fullHeight}>
       <Spinner size={size} />
       {text && <LoadingText>{text}</LoadingText>}
     </SpinnerContainer>

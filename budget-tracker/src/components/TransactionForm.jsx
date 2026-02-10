@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { useData } from '../context/DataContext';
 import LoadingSpinner from './LoadingSpinner';
+import SearchableSelect from './SearchableSelect';
 import styled from 'styled-components';
 import { format } from 'date-fns';
 
@@ -122,7 +123,7 @@ const AddCategoryButton = styled.button`
 const SubmitButton = styled.button`
   width: 100%;
   padding: 16px 20px;
-  background: ${props => props.transactionType === 'income' ? '#4CAF50' : '#f44336'};
+  background: ${props => props.$transactionType === 'income' ? '#4CAF50' : '#f44336'};
   color: white;
   border: none;
   border-radius: 12px;
@@ -134,7 +135,7 @@ const SubmitButton = styled.button`
   
   &:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px ${props => props.transactionType === 'income' ? 'rgba(76, 175, 80, 0.3)' : 'rgba(244, 67, 54, 0.3)'};
+    box-shadow: 0 4px 12px ${props => props.$transactionType === 'income' ? 'rgba(76, 175, 80, 0.3)' : 'rgba(244, 67, 54, 0.3)'};
   }
   
   &:active {
@@ -264,7 +265,7 @@ const TransactionForm = ({ onSuccess }) => {
       setDate(format(new Date(), 'yyyy-MM-dd'));
       setValidationErrors({});
       
-      setSuccessMessage(`${type === 'income' ? 'Income' : 'Expense'} of $${parseFloat(amount).toFixed(2)} added successfully!`);
+      setSuccessMessage(`${type === 'income' ? 'Income' : 'Expense'} of R${parseFloat(amount).toFixed(2)} added successfully!`);
       
       if (onSuccess) onSuccess();
     }
@@ -344,18 +345,14 @@ const TransactionForm = ({ onSuccess }) => {
           ) : (
             <CategoryRow>
               <div style={{ flex: 1 }}>
-                <Select
+                <SearchableSelect
                   value={category}
-                  onChange={(e) => setCategory(e.target.value)}
+                  onChange={(value) => setCategory(value)}
+                  options={filteredCategories.map(cat => cat.name)}
+                  placeholder="Select or search category"
                   error={validationErrors.category}
-                >
-                  <option value="">Select category</option>
-                  {filteredCategories.map(cat => (
-                    <option key={cat.id} value={cat.name}>
-                      {cat.name}
-                    </option>
-                  ))}
-                </Select>
+                  required
+                />
                 {validationErrors.category && <ErrorText>{validationErrors.category}</ErrorText>}
               </div>
               <AddCategoryButton 
@@ -388,7 +385,7 @@ const TransactionForm = ({ onSuccess }) => {
           />
         </FormGroup>
 
-        <SubmitButton type="submit" disabled={loading} transactionType={type}>
+        <SubmitButton type="submit" disabled={loading} $transactionType={type}>
           {loading ? 'Adding...' : `💾 Add ${type === 'income' ? 'Income' : 'Expense'}`}
         </SubmitButton>
       </form>

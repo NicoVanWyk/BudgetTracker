@@ -109,6 +109,7 @@ const CategoryInfo = styled.div`
   display: flex;
   align-items: center;
   gap: 1rem;
+  flex: 1;
 `;
 
 const CategoryColor = styled.div`
@@ -116,6 +117,10 @@ const CategoryColor = styled.div`
   height: 16px;
   border-radius: 50%;
   background: ${props => props.color};
+`;
+
+const CategoryDetails = styled.div`
+  flex: 1;
 `;
 
 const CategoryName = styled.div`
@@ -129,16 +134,44 @@ const CategoryType = styled.div`
   text-transform: capitalize;
 `;
 
-const DeleteButton = styled.button`
+const EditInput = styled.input`
+  font-weight: 600;
+  color: #333;
+  border: none;
+  background: #f8f9fa;
+  padding: 4px 8px;
+  border-radius: 4px;
+  margin-bottom: 4px;
+  
+  &:focus {
+    outline: 2px solid #2196F3;
+  }
+`;
+
+const EditSelect = styled.select`
+  font-size: 0.85rem;
+  background: #f8f9fa;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  padding: 2px 6px;
+`;
+
+const ActionButtons = styled.div`
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+`;
+
+const ActionButton = styled.button`
   background: none;
   border: none;
-  color: #f44336;
   cursor: pointer;
-  font-size: 1.2rem;
+  font-size: 1.1rem;
+  padding: 0.25rem;
+  border-radius: 4px;
   
   &:hover {
-    background: #ffebee;
-    border-radius: 4px;
+    background: ${props => props.$danger ? '#ffebee' : props.$primary ? '#e3f2fd' : '#f0f0f0'};
   }
 `;
 
@@ -161,8 +194,10 @@ const Categories = () => {
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategoryType, setNewCategoryType] = useState('expense');
   const [loading, setLoading] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [editData, setEditData] = useState({ name: '', type: '' });
 
-  const { categories, createCategory, removeCategory, error, clearError } = useData();
+  const { categories, createCategory, removeCategory, editCategory, error, clearError } = useData();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -191,6 +226,28 @@ const Categories = () => {
     setLoading(false);
   };
 
+  const handleEdit = (category) => {
+    setEditingId(category.id);
+    setEditData({ name: category.name, type: category.type });
+  };
+
+  const handleSaveEdit = async (categoryId) => {
+    const result = await editCategory(categoryId, {
+      name: editData.name.trim(),
+      type: editData.type
+    });
+    
+    if (result.success) {
+      setEditingId(null);
+      setEditData({ name: '', type: '' });
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setEditData({ name: '', type: '' });
+  };
+
   const handleDelete = async (categoryId) => {
     if (window.confirm('Are you sure you want to delete this category?')) {
       await removeCategory(categoryId);
@@ -201,6 +258,59 @@ const Categories = () => {
   const incomeCategories = categories.filter(cat => cat.type === 'income');
   const expenseCategories = categories.filter(cat => cat.type === 'expense');
   const bothCategories = categories.filter(cat => cat.type === 'both');
+
+  const renderCategory = (category) => (
+    <CategoryItem key={category.id}>
+      <CategoryInfo>
+        <CategoryColor color={category.color} />
+        <CategoryDetails>
+          {editingId === category.id ? (
+            <>
+              <EditInput
+                value={editData.name}
+                onChange={(e) => setEditData({...editData, name: e.target.value})}
+                onKeyPress={(e) => e.key === 'Enter' && handleSaveEdit(category.id)}
+              />
+              <EditSelect
+                value={editData.type}
+                onChange={(e) => setEditData({...editData, type: e.target.value})}
+              >
+                <option value="income">Income</option>
+                <option value="expense">Expense</option>
+                <option value="both">Both</option>
+              </EditSelect>
+            </>
+          ) : (
+            <>
+              <CategoryName>{category.name}</CategoryName>
+              <CategoryType>{category.type}</CategoryType>
+            </>
+          )}
+        </CategoryDetails>
+      </CategoryInfo>
+      <ActionButtons>
+        {editingId === category.id ? (
+          <>
+            <ActionButton $primary onClick={() => handleSaveEdit(category.id)}>
+              ✓
+            </ActionButton>
+            <ActionButton onClick={handleCancelEdit}>
+              ✕
+            </ActionButton>
+          </>
+        ) : (
+          <>
+            <ActionButton onClick={() => handleEdit(category)}>
+              ✏️
+            </ActionButton>
+            <ActionButton $danger onClick={() => handleDelete(category.id)}>
+              🗑️
+            </ActionButton>
+          </>
+        )}
+      </ActionButtons>
+    </CategoryItem>
+  );
 
   return (
     <PageContainer>
@@ -236,60 +346,21 @@ const Categories = () => {
             {incomeCategories.length > 0 && (
               <>
                 <SectionHeader>Income Categories</SectionHeader>
-                {incomeCategories.map(category => (
-                  <CategoryItem key={category.id}>
-                    <CategoryInfo>
-                      <CategoryColor color={category.color} />
-                      <div>
-                        <CategoryName>{category.name}</CategoryName>
-                        <CategoryType>{category.type}</CategoryType>
-                      </div>
-                    </CategoryInfo>
-                    <DeleteButton onClick={() => handleDelete(category.id)}>
-                      🗑️
-                    </DeleteButton>
-                  </CategoryItem>
-                ))}
+                {incomeCategories.map(renderCategory)}
               </>
             )}
 
             {expenseCategories.length > 0 && (
               <>
                 <SectionHeader>Expense Categories</SectionHeader>
-                {expenseCategories.map(category => (
-                  <CategoryItem key={category.id}>
-                    <CategoryInfo>
-                      <CategoryColor color={category.color} />
-                      <div>
-                        <CategoryName>{category.name}</CategoryName>
-                        <CategoryType>{category.type}</CategoryType>
-                      </div>
-                    </CategoryInfo>
-                    <DeleteButton onClick={() => handleDelete(category.id)}>
-                      🗑️
-                    </DeleteButton>
-                  </CategoryItem>
-                ))}
+                {expenseCategories.map(renderCategory)}
               </>
             )}
 
             {bothCategories.length > 0 && (
               <>
                 <SectionHeader>General Categories</SectionHeader>
-                {bothCategories.map(category => (
-                  <CategoryItem key={category.id}>
-                    <CategoryInfo>
-                      <CategoryColor color={category.color} />
-                      <div>
-                        <CategoryName>{category.name}</CategoryName>
-                        <CategoryType>{category.type}</CategoryType>
-                      </div>
-                    </CategoryInfo>
-                    <DeleteButton onClick={() => handleDelete(category.id)}>
-                      🗑️
-                    </DeleteButton>
-                  </CategoryItem>
-                ))}
+                {bothCategories.map(renderCategory)}
               </>
             )}
           </>

@@ -186,35 +186,35 @@ const Reports = () => {
         <SummaryCard>
           <SummaryTitle>Total Income</SummaryTitle>
           <SummaryAmount type="income">
-            ${yearSummary.totalIncome.toFixed(2)}
+            R{yearSummary.totalIncome.toFixed(2)}
           </SummaryAmount>
         </SummaryCard>
         
         <SummaryCard>
           <SummaryTitle>Total Expenses</SummaryTitle>
           <SummaryAmount type="expense">
-            ${yearSummary.totalExpenses.toFixed(2)}
+            R{yearSummary.totalExpenses.toFixed(2)}
           </SummaryAmount>
         </SummaryCard>
         
         <SummaryCard>
           <SummaryTitle>Net Amount</SummaryTitle>
           <SummaryAmount type={yearSummary.netAmount >= 0 ? 'income' : 'expense'}>
-            ${yearSummary.netAmount.toFixed(2)}
+            R{yearSummary.netAmount.toFixed(2)}
           </SummaryAmount>
         </SummaryCard>
         
         <SummaryCard>
           <SummaryTitle>Avg Monthly Income</SummaryTitle>
           <SummaryAmount type="income">
-            ${yearSummary.avgMonthlyIncome.toFixed(2)}
+            R{yearSummary.avgMonthlyIncome.toFixed(2)}
           </SummaryAmount>
         </SummaryCard>
         
         <SummaryCard>
           <SummaryTitle>Avg Monthly Expenses</SummaryTitle>
           <SummaryAmount type="expense">
-            ${yearSummary.avgMonthlyExpenses.toFixed(2)}
+            R{yearSummary.avgMonthlyExpenses.toFixed(2)}
           </SummaryAmount>
         </SummaryCard>
       </SummaryGrid>
@@ -227,7 +227,7 @@ const Reports = () => {
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="month" />
               <YAxis />
-              <Tooltip formatter={(value) => `$${value.toFixed(2)}`} />
+              <Tooltip formatter={(value) => `R${value.toFixed(2)}`} />
               <Legend />
               <Bar dataKey="income" fill="#4CAF50" name="Income" />
               <Bar dataKey="expenses" fill="#f44336" name="Expenses" />
@@ -242,7 +242,7 @@ const Reports = () => {
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="month" />
               <YAxis />
-              <Tooltip formatter={(value) => `$${value.toFixed(2)}`} />
+              <Tooltip formatter={(value) => `R${value.toFixed(2)}`} />
               <Legend />
               <Line 
                 type="monotone" 

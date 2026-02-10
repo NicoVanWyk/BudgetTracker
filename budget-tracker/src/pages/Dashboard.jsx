@@ -281,21 +281,21 @@ const Dashboard = () => {
         <SummaryCard>
           <SummaryTitle>This Month Income</SummaryTitle>
           <SummaryAmount type="income">
-            ${monthlyIncome.toFixed(2)}
+            R{monthlyIncome.toFixed(2)}
           </SummaryAmount>
         </SummaryCard>
         
         <SummaryCard>
           <SummaryTitle>This Month Expenses</SummaryTitle>
           <SummaryAmount type="expense">
-            ${monthlyExpenses.toFixed(2)}
+            R{monthlyExpenses.toFixed(2)}
           </SummaryAmount>
         </SummaryCard>
         
         <SummaryCard>
           <SummaryTitle>Net Amount</SummaryTitle>
           <SummaryAmount type={netAmount >= 0 ? 'income' : 'expense'}>
-            ${netAmount.toFixed(2)}
+            R{netAmount.toFixed(2)}
           </SummaryAmount>
         </SummaryCard>
       </SummaryGrid>

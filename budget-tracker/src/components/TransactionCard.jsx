@@ -67,8 +67,8 @@ const ActionButton = styled.button`
   transition: background-color 0.2s;
   
   &:hover {
-    background: ${props => props.danger ? '#ffebee' : '#f0f0f0'};
-    color: ${props => props.danger ? '#f44336' : '#333'};
+    background: ${props => props.$danger ? '#ffebee' : '#f0f0f0'};
+    color: ${props => props.$danger ? '#f44336' : '#333'};
   }
 `;
 
@@ -142,10 +142,21 @@ const SaveButton = styled.button`
 
 const TransactionCard = ({ transaction }) => {
   const [isEditing, setIsEditing] = useState(false);
+  const getDateValue = (dateValue) => {
+    if (!dateValue) return new Date();
+    if (dateValue.toDate && typeof dateValue.toDate === 'function') {
+      return dateValue.toDate(); // Firestore Timestamp
+    }
+    if (Object.prototype.toString.call(dateValue) === '[object Date]') {
+      return dateValue;
+    }
+    return new Date(dateValue);
+  };
+
   const [editData, setEditData] = useState({
     amount: transaction.amount,
     category: transaction.category,
-    date: format(new Date(transaction.date), 'yyyy-MM-dd'),
+    date: format(getDateValue(transaction.date), 'yyyy-MM-dd'),
     description: transaction.description || ''
   });
   const [saving, setSaving] = useState(false);
@@ -165,7 +176,7 @@ const TransactionCard = ({ transaction }) => {
     setEditData({
       amount: transaction.amount,
       category: transaction.category,
-      date: format(new Date(transaction.date), 'yyyy-MM-dd'),
+      date: format(getDateValue(transaction.date), 'yyyy-MM-dd'),
       description: transaction.description || ''
     });
   };
@@ -200,18 +211,18 @@ const TransactionCard = ({ transaction }) => {
           {transaction.description && (
             <Description>{transaction.description}</Description>
           )}
-          <Date>{format(new Date(transaction.date), 'MMM d, yyyy')}</Date>
+          <Date>{format(getDateValue(transaction.date), 'MMM d, yyyy')}</Date>
         </TransactionInfo>
         
         <Amount type={transaction.type}>
-          {transaction.type === 'income' ? '+' : '-'}${transaction.amount.toFixed(2)}
+          {transaction.type === 'income' ? '+' : '-'}R{transaction.amount.toFixed(2)}
         </Amount>
         
         <Actions>
           <ActionButton onClick={handleEdit} title="Edit">
             ✏️
           </ActionButton>
-          <ActionButton onClick={handleDelete} danger title="Delete">
+          <ActionButton onClick={handleDelete} $danger title="Delete">
             🗑️
           </ActionButton>
         </Actions>
