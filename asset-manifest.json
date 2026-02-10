@@ -1,15 +1,15 @@
 {
   "files": {
-    "main.css": "/your-repo-name/static/css/main.937de7f5.css",
-    "main.js": "/your-repo-name/static/js/main.3dfadc0d.js",
-    "static/js/453.52c59ed4.chunk.js": "/your-repo-name/static/js/453.52c59ed4.chunk.js",
-    "index.html": "/your-repo-name/index.html",
-    "main.937de7f5.css.map": "/your-repo-name/static/css/main.937de7f5.css.map",
-    "main.3dfadc0d.js.map": "/your-repo-name/static/js/main.3dfadc0d.js.map",
-    "453.52c59ed4.chunk.js.map": "/your-repo-name/static/js/453.52c59ed4.chunk.js.map"
+    "main.css": "/BudgetTracker/static/css/main.937de7f5.css",
+    "main.js": "/BudgetTracker/static/js/main.aa32c201.js",
+    "static/js/453.52c59ed4.chunk.js": "/BudgetTracker/static/js/453.52c59ed4.chunk.js",
+    "index.html": "/BudgetTracker/index.html",
+    "main.937de7f5.css.map": "/BudgetTracker/static/css/main.937de7f5.css.map",
+    "main.aa32c201.js.map": "/BudgetTracker/static/js/main.aa32c201.js.map",
+    "453.52c59ed4.chunk.js.map": "/BudgetTracker/static/js/453.52c59ed4.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.937de7f5.css",
-    "static/js/main.3dfadc0d.js"
+    "static/js/main.aa32c201.js"
   ]
 }
