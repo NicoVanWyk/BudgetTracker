@@ -1,9 +1,9 @@
-// src/pages/Reports.js
 import React, { useMemo } from 'react';
 import { useData } from '../context/DataContext';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import styled from 'styled-components';
 import { format, startOfMonth, endOfMonth, eachMonthOfInterval, startOfYear, endOfYear, isWithinInterval, startOfWeek, endOfWeek, addDays, subMonths } from 'date-fns';
+import { exportTransactionsToCSV, getExportSummary } from '../services/exportService';
 
 const PageContainer = styled.div`
   max-width: 1200px;
@@ -16,12 +16,24 @@ const PageTitle = styled.h1`
   text-align: center;
 `;
 
-const YearSelector = styled.div`
-  text-align: center;
+const ControlsBar = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
   margin-bottom: 2rem;
   
+  @media (max-width: 768px) {
+    flex-direction: column;
+  }
+`;
+
+const YearSelector = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  
   label {
-    margin-right: 0.5rem;
     font-weight: 600;
     color: #333;
   }
@@ -33,6 +45,88 @@ const YearSelector = styled.div`
     font-size: 1rem;
     background: white;
   }
+`;
+
+const ExportSection = styled.div`
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  margin-bottom: 2rem;
+`;
+
+const ExportTitle = styled.h3`
+  margin: 0 0 1rem 0;
+  color: #333;
+`;
+
+const ExportControls = styled.div`
+  display: flex;
+  gap: 1rem;
+  align-items: end;
+  flex-wrap: wrap;
+`;
+
+const DateGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  
+  label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #666;
+  }
+  
+  input {
+    padding: 0.5rem;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    
+    &:focus {
+      outline: none;
+      border-color: #2196F3;
+    }
+  }
+`;
+
+const ExportButton = styled.button`
+  padding: 0.6rem 1.5rem;
+  background: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  
+  &:hover {
+    background: #45a049;
+  }
+  
+  &:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+  }
+`;
+
+const ExportInfo = styled.div`
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: #e3f2fd;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  color: #1976d2;
+`;
+
+const ErrorMessage = styled.div`
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: #ffebee;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  color: #c62828;
 `;
 
 const ChartsGrid = styled.div`
@@ -135,11 +229,27 @@ const COLORS = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD'
 const Reports = () => {
   const { transactions, loading } = useData();
   const [selectedYear, setSelectedYear] = React.useState(new Date().getFullYear());
+  const [exportStartDate, setExportStartDate] = React.useState('');
+  const [exportEndDate, setExportEndDate] = React.useState('');
+  const [exportError, setExportError] = React.useState('');
+
+  const handleExport = () => {
+    setExportError('');
+    try {
+      exportTransactionsToCSV(transactions, exportStartDate, exportEndDate);
+    } catch (error) {
+      setExportError(error.message);
+    }
+  };
+
+  const exportDataSummary = useMemo(() => 
+    getExportSummary(transactions, exportStartDate, exportEndDate),
+    [transactions, exportStartDate, exportEndDate]
+  );
 
   const chartData = useMemo(() => {
     const yearStart = startOfYear(new Date(selectedYear, 0));
     const yearEnd = endOfYear(new Date(selectedYear, 0));
-    
     const months = eachMonthOfInterval({ start: yearStart, end: yearEnd });
     
     return months.map(month => {
@@ -158,13 +268,11 @@ const Reports = () => {
         .filter(t => t.type === 'expense')
         .reduce((sum, t) => sum + t.amount, 0);
       
-      const net = income - expenses;
-      
       return {
         month: format(month, 'MMM'),
         income: Number(income.toFixed(2)),
         expenses: Number(expenses.toFixed(2)),
-        net: Number(net.toFixed(2))
+        net: Number((income - expenses).toFixed(2))
       };
     });
   }, [transactions, selectedYear]);
@@ -178,14 +286,12 @@ const Reports = () => {
       t.type === 'expense'
     );
     
-    // Group by category
     const categoryTotals = yearTransactions.reduce((acc, transaction) => {
       const category = transaction.category;
       acc[category] = (acc[category] || 0) + transaction.amount;
       return acc;
     }, {});
     
-    // Convert to array and sort by amount
     return Object.entries(categoryTotals)
       .map(([name, value]) => ({
         name,
@@ -202,11 +308,9 @@ const Reports = () => {
     const previousWeekStart = startOfWeek(new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000), { weekStartsOn: 1 });
     const previousWeekEnd = endOfWeek(new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000), { weekStartsOn: 1 });
     
-    // Calculate same week in previous month
     const lastMonth = subMonths(today, 1);
     const currentWeekOfMonth = Math.ceil((today.getDate() + startOfMonth(today).getDay()) / 7);
     
-    // Find the same week number in previous month
     const prevMonthStart = startOfMonth(lastMonth);
     const prevMonthSameWeekStart = addDays(prevMonthStart, (currentWeekOfMonth - 1) * 7 - prevMonthStart.getDay() + 1);
     const prevMonthSameWeekEnd = endOfWeek(prevMonthSameWeekStart, { weekStartsOn: 1 });
@@ -222,10 +326,7 @@ const Reports = () => {
         t.type === 'expense'
       );
       
-      const weekData = {
-        period: label,
-        total: weekExpenses.reduce((sum, t) => sum + t.amount, 0)
-      };
+      const weekData = { period: label };
       
       categories.forEach(category => {
         const categoryTotal = weekExpenses
@@ -268,9 +369,7 @@ const Reports = () => {
         t.type === 'expense'
       );
       
-      const monthData = {
-        month: format(month, 'MMM'),
-      };
+      const monthData = { month: format(month, 'MMM') };
       
       categories.forEach(category => {
         const categoryTotal = monthExpenses
@@ -287,25 +386,21 @@ const Reports = () => {
     const totalIncome = chartData.reduce((sum, month) => sum + month.income, 0);
     const totalExpenses = chartData.reduce((sum, month) => sum + month.expenses, 0);
     const netAmount = totalIncome - totalExpenses;
-    const avgMonthlyIncome = totalIncome / 12;
-    const avgMonthlyExpenses = totalExpenses / 12;
     
     return {
       totalIncome,
       totalExpenses,
       netAmount,
-      avgMonthlyIncome,
-      avgMonthlyExpenses
+      avgMonthlyIncome: totalIncome / 12,
+      avgMonthlyExpenses: totalExpenses / 12
     };
   }, [chartData]);
 
-  // Get available years from transactions
   const availableYears = useMemo(() => {
     const years = [...new Set(transactions.map(t => new Date(t.date).getFullYear()))];
     return years.sort((a, b) => b - a);
   }, [transactions]);
 
-  // Get top 5 categories for the stacked bar chart
   const topCategories = categoryData.slice(0, 5).map(cat => cat.name);
 
   if (loading) {
@@ -328,31 +423,68 @@ const Reports = () => {
     <PageContainer>
       <PageTitle>Financial Reports</PageTitle>
       
-      <YearSelector>
-        <label>Year:</label>
-        <select 
-          value={selectedYear} 
-          onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-        >
-          {availableYears.map(year => (
-            <option key={year} value={year}>{year}</option>
-          ))}
-        </select>
-      </YearSelector>
+      <ControlsBar>
+        <YearSelector>
+          <label>Year:</label>
+          <select 
+            value={selectedYear} 
+            onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+          >
+            {availableYears.map(year => (
+              <option key={year} value={year}>{year}</option>
+            ))}
+          </select>
+        </YearSelector>
+      </ControlsBar>
+
+      <ExportSection>
+        <ExportTitle>Export Financial Data</ExportTitle>
+        <ExportControls>
+          <DateGroup>
+            <label>Start Date</label>
+            <input
+              type="date"
+              value={exportStartDate}
+              onChange={(e) => setExportStartDate(e.target.value)}
+            />
+          </DateGroup>
+          
+          <DateGroup>
+            <label>End Date</label>
+            <input
+              type="date"
+              value={exportEndDate}
+              onChange={(e) => setExportEndDate(e.target.value)}
+            />
+          </DateGroup>
+          
+          <ExportButton 
+            onClick={handleExport}
+            disabled={!exportStartDate || !exportEndDate}
+          >
+            Export to CSV
+          </ExportButton>
+        </ExportControls>
+        
+        {exportDataSummary && (
+          <ExportInfo>
+            Selected range contains {exportDataSummary.total} transactions 
+            ({exportDataSummary.income} income, {exportDataSummary.expenses} expenses)
+          </ExportInfo>
+        )}
+        
+        {exportError && <ErrorMessage>{exportError}</ErrorMessage>}
+      </ExportSection>
 
       <SummaryGrid>
         <SummaryCard>
           <SummaryTitle>Total Income</SummaryTitle>
-          <SummaryAmount type="income">
-            R{yearSummary.totalIncome.toFixed(2)}
-          </SummaryAmount>
+          <SummaryAmount type="income">R{yearSummary.totalIncome.toFixed(2)}</SummaryAmount>
         </SummaryCard>
         
         <SummaryCard>
           <SummaryTitle>Total Expenses</SummaryTitle>
-          <SummaryAmount type="expense">
-            R{yearSummary.totalExpenses.toFixed(2)}
-          </SummaryAmount>
+          <SummaryAmount type="expense">R{yearSummary.totalExpenses.toFixed(2)}</SummaryAmount>
         </SummaryCard>
         
         <SummaryCard>
@@ -364,16 +496,12 @@ const Reports = () => {
         
         <SummaryCard>
           <SummaryTitle>Avg Monthly Income</SummaryTitle>
-          <SummaryAmount type="income">
-            R{yearSummary.avgMonthlyIncome.toFixed(2)}
-          </SummaryAmount>
+          <SummaryAmount type="income">R{yearSummary.avgMonthlyIncome.toFixed(2)}</SummaryAmount>
         </SummaryCard>
         
         <SummaryCard>
           <SummaryTitle>Avg Monthly Expenses</SummaryTitle>
-          <SummaryAmount type="expense">
-            R{yearSummary.avgMonthlyExpenses.toFixed(2)}
-          </SummaryAmount>
+          <SummaryAmount type="expense">R{yearSummary.avgMonthlyExpenses.toFixed(2)}</SummaryAmount>
         </SummaryCard>
       </SummaryGrid>
 
@@ -433,7 +561,7 @@ const Reports = () => {
             </PieChart>
           </ResponsiveContainer>
           <CategoryTable>
-            {categoryData.map((category, index) => (
+            {categoryData.map((category) => (
               <CategoryRow key={category.name}>
                 <CategoryName>{category.name}</CategoryName>
                 <CategoryAmount>R{category.value.toFixed(2)}</CategoryAmount>
